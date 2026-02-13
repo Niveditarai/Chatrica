@@ -22,3 +22,58 @@ def fetch_stats(selected_user, df):
         links.extend(extractor.find_urls(msg))
 
     return num_messages, num_words, num_media, len(links)
+from collections import Counter
+import emoji
+import pandas as pd
+
+def emoji_analysis(selected_user, df):
+
+    if selected_user != "Overall":
+        df = df[df['user'] == selected_user]
+
+    emojis = []
+
+    for msg in df['message']:
+        for char in msg:
+            if char in emoji.EMOJI_DATA:
+                emojis.append(char)
+
+    emoji_count = Counter(emojis)
+
+    emoji_df = pd.DataFrame(emoji_count.items(), columns=['emoji', 'count'])
+    emoji_df = emoji_df.sort_values(by='count', ascending=False)
+
+    return emoji_df.head()
+def most_common_words(selected_user, df):
+
+    if selected_user != "Overall":
+        df = df[df['user'] == selected_user]
+
+    with open("stopwords.txt", "r") as f:
+        stop_words = f.read().split()
+
+    words = []
+
+    for msg in df['message']:
+        for word in msg.lower().split():
+            if word not in stop_words:
+                words.append(word)
+
+    word_freq = Counter(words).most_common(10)
+
+    common_df = pd.DataFrame(word_freq, columns=['word', 'count'])
+    return common_df
+def activity_heatmap(selected_user, df):
+
+    if selected_user != "Overall":
+        df = df[df['user'] == selected_user]
+
+    heatmap = df.pivot_table(
+        index='day_name',
+        columns='hour',
+        values='message',
+        aggfunc='count'
+    ).fillna(0)
+
+    return heatmap
+
