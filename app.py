@@ -18,7 +18,7 @@ if uploaded_file is not None:
 
     df = preprocess.preprocess(data)
 
-    # User dropdown
+    # ---- User Dropdown ----
     user_list = df['user'].unique().tolist()
 
     if 'group_notification' in user_list:
@@ -31,7 +31,9 @@ if uploaded_file is not None:
 
     if st.button("Show Analysis"):
 
-        # ---- Basic Stats ----
+        # =============================
+        # 📊 Basic Stats
+        # =============================
         num_messages, num_words, num_media, num_links = helper.fetch_stats(selected_user, df)
 
         st.subheader("Top Statistics")
@@ -42,7 +44,9 @@ if uploaded_file is not None:
         col3.metric("Media", num_media)
         col4.metric("Links", num_links)
 
-        # ---- Emoji Analysis ----
+        # =============================
+        # 😊 Emoji Analysis
+        # =============================
         st.subheader("Emoji Analysis")
         emoji_df = helper.emoji_analysis(selected_user, df)
 
@@ -51,3 +55,29 @@ if uploaded_file is not None:
             st.bar_chart(emoji_df.set_index('emoji'))
         else:
             st.write("No emojis found")
+
+        # =============================
+        # 🤖 Transformer Sentiment Analysis
+        # =============================
+        st.subheader("Transformer Sentiment Analysis")
+
+        sentiment_counts, sentiment_df = helper.transformer_sentiment_analysis(selected_user, df)
+
+        st.write("Sentiment Distribution")
+        st.bar_chart(sentiment_counts)
+
+        # ---- Timeline ----
+        sentiment_df['date'] = pd.to_datetime(sentiment_df['date'])
+        sentiment_df['only_date'] = sentiment_df['date'].dt.date
+
+        daily_sentiment = sentiment_df.groupby(['only_date', 'sentiment']).size().unstack().fillna(0)
+
+        st.line_chart(daily_sentiment)
+
+        # ---- Score System ----
+        score_map = {"POSITIVE": 1, "NEGATIVE": -1}
+        sentiment_df['score'] = sentiment_df['sentiment'].map(score_map)
+
+        overall_score = sentiment_df['score'].mean()
+
+        st.write("Overall Sentiment Score:", round(overall_score, 3))

@@ -76,4 +76,33 @@ def activity_heatmap(selected_user, df):
     ).fillna(0)
 
     return heatmap
+from transformers import pipeline
+
+# Load model only once (important!)
+sentiment_pipeline = pipeline(
+    "sentiment-analysis",
+    model="distilbert-base-uncased-finetuned-sst-2-english"
+)
+
+def transformer_sentiment_analysis(selected_user, df):
+    
+    # Filter user if not group
+    if selected_user != "Overall":
+        df = df[df['user'] == selected_user]
+
+    sentiments = []
+
+    for message in df['message']:
+        try:
+            result = sentiment_pipeline(message[:512])[0]  # limit to 512 tokens
+            sentiments.append(result['label'])
+        except:
+            sentiments.append("NEUTRAL")
+
+    df['sentiment'] = sentiments
+
+    sentiment_counts = df['sentiment'].value_counts()
+
+    return sentiment_counts, df
+
 
