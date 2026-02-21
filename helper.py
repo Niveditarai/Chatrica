@@ -104,5 +104,51 @@ def transformer_sentiment_analysis(selected_user, df):
     sentiment_counts = df['sentiment'].value_counts()
 
     return sentiment_counts, df
+def generate_chat_summary(selected_user, df, sentiment_df):
+    
+    if selected_user != "Overall":
+        df = df[df['user'] == selected_user]
+
+    total_messages = df.shape[0]
+
+    # Most active user (for group)
+    most_active_user = None
+    if selected_user == "Overall":
+        most_active_user = df['user'].value_counts().idxmax()
+
+    # Peak day
+    df['only_date'] = pd.to_datetime(df['date']).dt.date
+    peak_day = df['only_date'].value_counts().idxmax()
+
+    # Peak hour
+    df['hour'] = pd.to_datetime(df['date']).dt.hour
+    peak_hour = df['hour'].value_counts().idxmax()
+
+    # Sentiment score
+    score_map = {"POSITIVE": 1, "NEGATIVE": -1}
+    sentiment_df['score'] = sentiment_df['sentiment'].map(score_map)
+    overall_score = sentiment_df['score'].mean()
+
+    if overall_score > 0:
+        mood = "predominantly positive"
+    elif overall_score < 0:
+        mood = "mostly negative"
+    else:
+        mood = "balanced"
+
+    # Generate summary text
+    summary = f"""
+    📊 Chat Summary Report:
+
+    • Total Messages: {total_messages}
+    • Overall Mood: {mood}
+    • Peak Activity Day: {peak_day}
+    • Peak Activity Hour: {peak_hour}:00 hrs
+    """
+
+    if most_active_user:
+        summary += f"\n• Most Active User: {most_active_user}"
+
+    return summary
 
 
