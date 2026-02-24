@@ -37,7 +37,8 @@ if not os.path.exists(USER_FILE):
 # AUTH FUNCTIONS
 # ==============================
 def signup():
-    st.subheader("📝 Sign Up")
+    st.markdown("### 📝 Create New Account")
+    st.markdown("---")
 
     new_user = st.text_input("Create Username")
     new_pass = st.text_input("Create Password", type="password")
@@ -62,7 +63,8 @@ def signup():
 
 
 def login():
-    st.subheader("🔐 Login")
+    st.markdown("### 🔐 Login to Continue")
+    st.markdown("---")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
@@ -77,7 +79,7 @@ def login():
         username = username.strip()
         password = password.strip()
 
-        if ((users["username"] == username) & 
+        if ((users["username"] == username) &
             (users["password"] == password)).any():
 
             st.session_state.logged_in = True
@@ -89,48 +91,74 @@ def login():
 
 
 # ==============================
-# WHATSAPP GREEN THEME
+# DARK WHATSAPP THEME
 # ==============================
 st.markdown("""
 <style>
-.stApp { background-color: #f0fdf4; }
 
+/* MAIN BACKGROUND */
+.stApp {
+    background-color: #0f0f0f;
+    color: white;
+}
+
+/* HEADER */
 .header {
     background: linear-gradient(90deg, #25D366, #128C7E);
     padding: 25px;
-    border-radius: 20px;
+    border-radius: 15px;
     text-align: center;
     color: white;
     font-size: 36px;
     font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
+/* SIDEBAR */
 section[data-testid="stSidebar"] {
-    background-color: #128C7E;
+    background-color: #111111;
     color: white;
 }
 
+/* INPUT FIELDS */
+input, textarea {
+    background-color: #1e1e1e !important;
+    color: white !important;
+    border-radius: 8px !important;
+    border: 1px solid #25D366 !important;
+}
+
+/* RADIO */
+div[role="radiogroup"] {
+    color: white !important;
+}
+
+/* BUTTONS */
 .stButton>button {
     background-color: #25D366;
-    color: white;
-    border-radius: 10px;
+    color: black;
+    font-weight: bold;
+    border-radius: 8px;
     height: 3em;
     width: 100%;
-    font-size: 16px;
     border: none;
 }
 
 .stButton>button:hover {
     background-color: #128C7E;
+    color: white;
 }
 
+/* KPI CARDS */
 .kpi-card {
-    background: rgba(37, 211, 102, 0.15);
+    background: #1a1a1a;
     padding: 20px;
     border-radius: 15px;
     text-align: center;
-    font-weight: bold;
+    border: 1px solid #25D366;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -203,7 +231,7 @@ else:
             with tab1:
                 timeline = df.groupby(df['date'].dt.date).size().reset_index(name='messages')
                 fig = px.line(timeline, x="date", y="messages",
-                              color_discrete_sequence=["#128C7E"])
+                              color_discrete_sequence=["#25D366"])
                 st.plotly_chart(fig, use_container_width=True)
 
             with tab2:
