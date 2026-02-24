@@ -5,77 +5,130 @@ import pandas as pd
 import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
+import os
 
 # ==============================
 # PAGE CONFIG
 # ==============================
 st.set_page_config(
-    page_title="WhatsApp Chat Analyzer 💖",
+    page_title="WhatsApp Chat Analyzer 💚",
     page_icon="💬",
     layout="wide"
 )
 
 # ==============================
-# SESSION STATE INIT
+# SESSION INIT
 # ==============================
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# ==============================
-# SIMPLE USER DATABASE
-# ==============================
-USER_CREDENTIALS = {
-    "nivi": "1234",
-    "admin": "admin123"
-}
+if "username" not in st.session_state:
+    st.session_state.username = ""
 
 # ==============================
-# LOGIN FUNCTION
+# USER FILE SETUP
 # ==============================
+USER_FILE = "users.csv"
+
+if not os.path.exists(USER_FILE):
+    pd.DataFrame(columns=["username", "password"]).to_csv(USER_FILE, index=False)
+
+# ==============================
+# AUTH FUNCTIONS
+# ==============================
+def signup():
+    st.subheader("📝 Sign Up")
+
+    new_user = st.text_input("Create Username")
+    new_pass = st.text_input("Create Password", type="password")
+
+    if st.button("Sign Up"):
+
+        if new_user.strip() == "" or new_pass.strip() == "":
+            st.warning("Fields cannot be empty ⚠")
+            return
+
+        users = pd.read_csv(USER_FILE)
+
+        if new_user.strip() in users["username"].astype(str).values:
+            st.warning("Username already exists ⚠")
+        else:
+            new_data = pd.DataFrame(
+                [[new_user.strip(), new_pass.strip()]],
+                columns=["username", "password"]
+            )
+            new_data.to_csv(USER_FILE, mode='a', header=False, index=False)
+            st.success("Account Created Successfully 🎉 Please Login.")
+
+
 def login():
-
-    st.markdown("## 🔐 Login to Access Dashboard")
+    st.subheader("🔐 Login")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
+
+        users = pd.read_csv(USER_FILE)
+
+        users["username"] = users["username"].astype(str).str.strip()
+        users["password"] = users["password"].astype(str).str.strip()
+
+        username = username.strip()
+        password = password.strip()
+
+        if ((users["username"] == username) & 
+            (users["password"] == password)).any():
+
             st.session_state.logged_in = True
-            st.success("Login Successful 💖")
+            st.session_state.username = username
+            st.success("Login Successful 💚")
             st.rerun()
         else:
             st.error("Invalid Username or Password ❌")
 
 
 # ==============================
-# PINK THEME
+# WHATSAPP GREEN THEME
 # ==============================
 st.markdown("""
 <style>
-.stApp { background-color: #ffe6f0; }
+.stApp { background-color: #f0fdf4; }
 
 .header {
-    background: linear-gradient(90deg, #ff66a3, #ff99cc, #cc0066);
+    background: linear-gradient(90deg, #25D366, #128C7E);
     padding: 25px;
     border-radius: 20px;
     text-align: center;
     color: white;
-    font-size: 40px;
+    font-size: 36px;
     font-weight: bold;
 }
 
 section[data-testid="stSidebar"] {
-    background-color: #ff99cc;
+    background-color: #128C7E;
+    color: white;
+}
+
+.stButton>button {
+    background-color: #25D366;
+    color: white;
+    border-radius: 10px;
+    height: 3em;
+    width: 100%;
+    font-size: 16px;
+    border: none;
+}
+
+.stButton>button:hover {
+    background-color: #128C7E;
 }
 
 .kpi-card {
-    background: rgba(255, 182, 193, 0.4);
-    backdrop-filter: blur(10px);
+    background: rgba(37, 211, 102, 0.15);
     padding: 20px;
-    border-radius: 20px;
+    border-radius: 15px;
     text-align: center;
-    font-size: 18px;
     font-weight: bold;
 }
 </style>
@@ -84,38 +137,33 @@ section[data-testid="stSidebar"] {
 st.markdown('<div class="header">💬 WhatsApp Chat Analyzer</div>', unsafe_allow_html=True)
 st.markdown("---")
 
-
 # ==============================
-# AUTH CHECK
+# AUTH SCREEN
 # ==============================
 if not st.session_state.logged_in:
-    login()
 
+    choice = st.radio("Choose Option", ["Login", "Sign Up"])
+
+    if choice == "Login":
+        login()
+    else:
+        signup()
+
+# ==============================
+# DASHBOARD
+# ==============================
 else:
-    # ==============================
-    # SIDEBAR (AFTER LOGIN)
-    # ==============================
-    st.sidebar.success("Logged in Successfully 💕")
+
+    st.sidebar.success(f"Welcome {st.session_state.username} 💚")
 
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
+        st.session_state.username = ""
         st.rerun()
 
     st.sidebar.title("📂 Upload Chat File")
     uploaded_file = st.sidebar.file_uploader("Choose your WhatsApp chat (.txt)")
 
-    dark_mode = st.sidebar.toggle("🌙 Dark Pink Mode")
-
-    if dark_mode:
-        st.markdown("""
-        <style>
-        .stApp { background-color: #33001a; color: white; }
-        </style>
-        """, unsafe_allow_html=True)
-
-    # ==============================
-    # MAIN DASHBOARD
-    # ==============================
     if uploaded_file is not None:
 
         bytes_data = uploaded_file.getvalue()
@@ -125,14 +173,14 @@ else:
         except:
             data = bytes_data.decode("latin-1")
 
-        with st.spinner("Analyzing your chat 💕..."):
-            df = preprocess.preprocess(data)
+        df = preprocess.preprocess(data)
 
         st.success("File Uploaded Successfully 🎉")
 
         user_list = df['user'].unique().tolist()
         if 'group_notification' in user_list:
             user_list.remove('group_notification')
+
         user_list.sort()
         user_list.insert(0, "Overall")
 
@@ -142,7 +190,6 @@ else:
 
             num_messages, num_words, num_media, _ = helper.fetch_stats(selected_user, df)
 
-            # KPI CARDS
             col1, col2, col3 = st.columns(3)
 
             col1.markdown(f"<div class='kpi-card'>💬 Messages<br><h2>{num_messages}</h2></div>", unsafe_allow_html=True)
@@ -151,14 +198,12 @@ else:
 
             st.markdown("---")
 
-            # TABS
-            tab1, tab2, tab3 = st.tabs(["📊 Timeline", "😊 Emoji", "🔥 Heatmap"])
+            tab1, tab2 = st.tabs(["📊 Timeline", "😊 Emoji"])
 
             with tab1:
                 timeline = df.groupby(df['date'].dt.date).size().reset_index(name='messages')
                 fig = px.line(timeline, x="date", y="messages",
-                              title="📈 Daily Message Timeline",
-                              color_discrete_sequence=["#cc0066"])
+                              color_discrete_sequence=["#128C7E"])
                 st.plotly_chart(fig, use_container_width=True)
 
             with tab2:
@@ -170,32 +215,11 @@ else:
                         x="emoji",
                         y="count",
                         color="count",
-                        color_continuous_scale="pinkyl"
+                        color_continuous_scale="greens"
                     )
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.write("No emojis found")
 
-            with tab3:
-                heatmap = df.pivot_table(
-                    index='day_name',
-                    columns=df['date'].dt.hour,
-                    values='message',
-                    aggfunc='count'
-                ).fillna(0)
-
-                fig, ax = plt.subplots(figsize=(10, 5))
-                sns.heatmap(heatmap, cmap="RdPu", ax=ax)
-                st.pyplot(fig)
-
-            # DOWNLOAD OPTION
-            csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="📥 Download Processed Data",
-                data=csv,
-                file_name="whatsapp_analysis.csv",
-                mime="text/csv"
-            )
-
             st.markdown("---")
-            st.markdown("<center>Made with 💖 by Nivi</center>", unsafe_allow_html=True)
+            st.markdown("<center>Made with 💚 by Nivi</center>", unsafe_allow_html=True)
