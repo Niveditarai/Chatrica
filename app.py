@@ -33,7 +33,9 @@ USER_CREDENTIALS = {
 # LOGIN FUNCTION
 # ==============================
 def login():
+
     st.markdown("## 🔐 Login to Access Dashboard")
+
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
@@ -45,51 +47,43 @@ def login():
         else:
             st.error("Invalid Username or Password ❌")
 
+
 # ==============================
-# BLACK + PINK THEME
+# PINK THEME
 # ==============================
 st.markdown("""
 <style>
-.stApp {
-    background-color: black;
-    color: #ff4da6;
-}
+.stApp { background-color: #ffe6f0; }
 
 .header {
-    background: linear-gradient(90deg, #ff1493, #ff4da6);
+    background: linear-gradient(90deg, #ff66a3, #ff99cc, #cc0066);
     padding: 25px;
     border-radius: 20px;
     text-align: center;
-    color: black;
+    color: white;
     font-size: 40px;
     font-weight: bold;
 }
 
 section[data-testid="stSidebar"] {
-    background-color: #111111;
-    color: #ff4da6;
+    background-color: #ff99cc;
 }
 
 .kpi-card {
-    background: #1a1a1a;
-    border: 2px solid #ff4da6;
+    background: rgba(255, 182, 193, 0.4);
+    backdrop-filter: blur(10px);
     padding: 20px;
     border-radius: 20px;
     text-align: center;
     font-size: 18px;
     font-weight: bold;
-    color: #ff4da6;
-}
-
-button {
-    background-color: #ff4da6 !important;
-    color: black !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="header">💬 WhatsApp Chat Analyzer</div>', unsafe_allow_html=True)
 st.markdown("---")
+
 
 # ==============================
 # AUTH CHECK
@@ -98,6 +92,9 @@ if not st.session_state.logged_in:
     login()
 
 else:
+    # ==============================
+    # SIDEBAR (AFTER LOGIN)
+    # ==============================
     st.sidebar.success("Logged in Successfully 💕")
 
     if st.sidebar.button("Logout"):
@@ -106,6 +103,15 @@ else:
 
     st.sidebar.title("📂 Upload Chat File")
     uploaded_file = st.sidebar.file_uploader("Choose your WhatsApp chat (.txt)")
+
+    dark_mode = st.sidebar.toggle("🌙 Dark Pink Mode")
+
+    if dark_mode:
+        st.markdown("""
+        <style>
+        .stApp { background-color: #33001a; color: white; }
+        </style>
+        """, unsafe_allow_html=True)
 
     # ==============================
     # MAIN DASHBOARD
@@ -119,7 +125,7 @@ else:
         except:
             data = bytes_data.decode("latin-1")
 
-        with st.spinner("Analyzing your chat 💖..."):
+        with st.spinner("Analyzing your chat 💕..."):
             df = preprocess.preprocess(data)
 
         st.success("File Uploaded Successfully 🎉")
@@ -134,11 +140,9 @@ else:
 
         if st.button("Show Analysis"):
 
-            # ==============================
-            # BASIC STATS
-            # ==============================
             num_messages, num_words, num_media, _ = helper.fetch_stats(selected_user, df)
 
+            # KPI CARDS
             col1, col2, col3 = st.columns(3)
 
             col1.markdown(f"<div class='kpi-card'>💬 Messages<br><h2>{num_messages}</h2></div>", unsafe_allow_html=True)
@@ -147,17 +151,14 @@ else:
 
             st.markdown("---")
 
-            # ==============================
             # TABS
-            # ==============================
             tab1, tab2, tab3 = st.tabs(["📊 Timeline", "😊 Emoji", "🔥 Heatmap"])
 
             with tab1:
                 timeline = df.groupby(df['date'].dt.date).size().reset_index(name='messages')
                 fig = px.line(timeline, x="date", y="messages",
-                              title="Daily Message Timeline",
-                              color_discrete_sequence=["#ff4da6"])
-                fig.update_layout(plot_bgcolor="black", paper_bgcolor="black", font_color="#ff4da6")
+                              title="📈 Daily Message Timeline",
+                              color_discrete_sequence=["#cc0066"])
                 st.plotly_chart(fig, use_container_width=True)
 
             with tab2:
@@ -171,7 +172,6 @@ else:
                         color="count",
                         color_continuous_scale="pinkyl"
                     )
-                    fig.update_layout(plot_bgcolor="black", paper_bgcolor="black", font_color="#ff4da6")
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.write("No emojis found")
@@ -184,36 +184,11 @@ else:
                     aggfunc='count'
                 ).fillna(0)
 
-                if not heatmap.empty:
-                    fig, ax = plt.subplots(figsize=(10, 5))
-                    sns.heatmap(heatmap, cmap="RdPu", ax=ax)
-                    ax.set_facecolor("black")
-                    fig.patch.set_facecolor("black")
-                    st.pyplot(fig)
-                else:
-                    st.write("No activity data available")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                sns.heatmap(heatmap, cmap="RdPu", ax=ax)
+                st.pyplot(fig)
 
-            # ==============================
-            # TRANSFORMER SENTIMENT
-            # ==============================
-            st.markdown("---")
-            st.subheader("🤖 Transformer Sentiment Analysis")
-
-            sentiment_counts, sentiment_df = helper.transformer_sentiment_analysis(selected_user, df)
-            st.bar_chart(sentiment_counts)
-
-            # ==============================
-            # AUTOMATED SUMMARY
-            # ==============================
-            st.markdown("---")
-            st.subheader("🧠 Automated Chat Summary")
-
-            summary = helper.generate_chat_summary(selected_user, df, sentiment_df)
-            st.info(summary)
-
-            # ==============================
             # DOWNLOAD OPTION
-            # ==============================
             csv = df.to_csv(index=False).encode('utf-8')
             st.download_button(
                 label="📥 Download Processed Data",
@@ -223,4 +198,4 @@ else:
             )
 
             st.markdown("---")
-            st.markdown("<center style='color:#ff4da6;'>Made with 💖 by Nivi</center>", unsafe_allow_html=True)
+            st.markdown("<center>Made with 💖 by Nivi</center>", unsafe_allow_html=True)
