@@ -6,248 +6,181 @@ import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
 import os
+import zipfile
 
-# ==============================
-# PAGE CONFIG
-# ==============================
-st.set_page_config(
-    page_title="WhatsApp Chat Analyzer 💚",
-    page_icon="💬",
-    layout="wide"
-)
+# ================= PAGE CONFIG =================
+st.set_page_config(page_title="Chatrica 🤖", layout="wide")
 
-# ==============================
-# SESSION INIT
-# ==============================
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
+# ================= THEME TOGGLE =================
+theme = st.sidebar.toggle("🌙 Dark Mode", value=True)
 
-if "username" not in st.session_state:
-    st.session_state.username = ""
+# ================= COLOR PALETTE (BASED ON YOUR IMAGE) =================
+primary_color = "#4cc9f0"     # neon blue
+secondary_color = "#b5179e"   # purple accent
+text_color = "white" if theme else "black"
+glass_bg = "rgba(10,10,20,0.85)" if theme else "rgba(255,255,255,0.85)"
 
-# ==============================
-# USER FILE SETUP
-# ==============================
-USER_FILE = "users.csv"
-
-if not os.path.exists(USER_FILE):
-    pd.DataFrame(columns=["username", "password"]).to_csv(USER_FILE, index=False)
-
-# ==============================
-# AUTH FUNCTIONS
-# ==============================
-def signup():
-    st.markdown("### 📝 Create New Account")
-    st.markdown("---")
-
-    new_user = st.text_input("Create Username")
-    new_pass = st.text_input("Create Password", type="password")
-
-    if st.button("Sign Up"):
-
-        if new_user.strip() == "" or new_pass.strip() == "":
-            st.warning("Fields cannot be empty ⚠")
-            return
-
-        users = pd.read_csv(USER_FILE)
-
-        if new_user.strip() in users["username"].astype(str).values:
-            st.warning("Username already exists ⚠")
-        else:
-            new_data = pd.DataFrame(
-                [[new_user.strip(), new_pass.strip()]],
-                columns=["username", "password"]
-            )
-            new_data.to_csv(USER_FILE, mode='a', header=False, index=False)
-            st.success("Account Created Successfully 🎉 Please Login.")
-
-
-def login():
-    st.markdown("### 🔐 Login to Continue")
-    st.markdown("---")
-
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-
-        users = pd.read_csv(USER_FILE)
-
-        users["username"] = users["username"].astype(str).str.strip()
-        users["password"] = users["password"].astype(str).str.strip()
-
-        username = username.strip()
-        password = password.strip()
-
-        if ((users["username"] == username) &
-            (users["password"] == password)).any():
-
-            st.session_state.logged_in = True
-            st.session_state.username = username
-            st.success("Login Successful 💚")
-            st.rerun()
-        else:
-            st.error("Invalid Username or Password ❌")
-
-
-# ==============================
-# DARK WHATSAPP THEME
-# ==============================
-st.markdown("""
+# ================= CUSTOM CSS =================
+st.markdown(f"""
 <style>
 
-/* MAIN BACKGROUND */
-.stApp {
-    background-color: #0f0f0f;
-    color: white;
-}
+/* Background using your image */
+.stApp {{
+    background-image: url("background.png");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    color: {text_color};
+}}
 
-/* HEADER */
-.header {
-    background: linear-gradient(90deg, #25D366, #128C7E);
+/* Glass container */
+.block-container {{
+    background: {glass_bg};
+    padding: 2rem;
+    border-radius: 20px;
+}}
+
+/* Title Styling */
+.title {{
+    font-size: 60px;
+    text-align: center;
+    font-weight: 800;
+    background: linear-gradient(90deg, {primary_color}, {secondary_color});
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 3px;
+}}
+
+/* Subtitle */
+.subtitle {{
+    text-align: center;
+    font-size: 18px;
+    color: {primary_color};
+    margin-bottom: 20px;
+}}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {{
+    background: rgba(0,0,20,0.95);
+}}
+
+/* KPI Cards */
+.kpi-card {{
+    background: rgba(76,201,240,0.08);
     padding: 25px;
-    border-radius: 15px;
+    border-radius: 20px;
     text-align: center;
+    border: 1px solid {primary_color};
+    backdrop-filter: blur(12px);
+    transition: 0.3s ease;
+}}
+
+.kpi-card:hover {{
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px {primary_color};
+}}
+
+/* Buttons */
+.stButton>button {{
+    background: linear-gradient(90deg,{primary_color},{secondary_color});
     color: white;
-    font-size: 36px;
     font-weight: bold;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-}
-
-/* SIDEBAR */
-section[data-testid="stSidebar"] {
-    background-color: #111111;
-    color: white;
-}
-
-/* INPUT FIELDS */
-input, textarea {
-    background-color: #1e1e1e !important;
-    color: white !important;
-    border-radius: 8px !important;
-    border: 1px solid #25D366 !important;
-}
-
-/* RADIO */
-div[role="radiogroup"] {
-    color: white !important;
-}
-
-/* BUTTONS */
-.stButton>button {
-    background-color: #25D366;
-    color: black;
-    font-weight: bold;
-    border-radius: 8px;
-    height: 3em;
-    width: 100%;
+    border-radius: 10px;
     border: none;
-}
+    height: 3em;
+}}
 
-.stButton>button:hover {
-    background-color: #128C7E;
-    color: white;
-}
-
-/* KPI CARDS */
-.kpi-card {
-    background: #1a1a1a;
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    border: 1px solid #25D366;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
+.stButton>button:hover {{
+    transform: scale(1.05);
+}}
 
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="header">💬 WhatsApp Chat Analyzer</div>', unsafe_allow_html=True)
+# ================= TITLE =================
+st.markdown('<div class="title">🤖 Chatrica</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">AI Powered Conversation Intelligence</div>', unsafe_allow_html=True)
 st.markdown("---")
 
-# ==============================
-# AUTH SCREEN
-# ==============================
-if not st.session_state.logged_in:
+# ================= SESSION =================
+if "analysis_done" not in st.session_state:
+    st.session_state.analysis_done = False
+if "run_toxicity" not in st.session_state:
+    st.session_state.run_toxicity = False
 
-    choice = st.radio("Choose Option", ["Login", "Sign Up"])
+# ================= FILE UPLOAD =================
+uploaded_file = st.sidebar.file_uploader(
+    "Upload Chat (.txt or .zip with media)",
+    type=["txt","zip"]
+)
 
-    if choice == "Login":
-        login()
+if uploaded_file:
+
+    if uploaded_file.name.endswith(".zip"):
+        with zipfile.ZipFile(uploaded_file) as z:
+            txt_file = [f for f in z.namelist() if f.endswith(".txt")][0]
+            with z.open(txt_file) as f:
+                data = f.read().decode("utf-8", errors="ignore")
+
+            media_files = [
+                f for f in z.namelist()
+                if f.lower().endswith((".jpg",".png",".mp4",".mp3",".opus"))
+            ]
+            total_media_files = len(media_files)
     else:
-        signup()
+        data = uploaded_file.getvalue().decode("utf-8", errors="ignore")
+        total_media_files = 0
 
-# ==============================
-# DASHBOARD
-# ==============================
-else:
+    df = preprocess.preprocess(data)
 
-    st.sidebar.success(f"Welcome {st.session_state.username} 💚")
+    selected_user = st.selectbox(
+        "Analyze for",
+        ["Overall"] + df['user'].unique().tolist()
+    )
 
-    if st.sidebar.button("Logout"):
-        st.session_state.logged_in = False
-        st.session_state.username = ""
-        st.rerun()
+    if st.button("Analyze Conversations"):
+        st.session_state.analysis_done = True
 
-    st.sidebar.title("📂 Upload Chat File")
-    uploaded_file = st.sidebar.file_uploader("Choose your WhatsApp chat (.txt)")
+    if st.session_state.analysis_done:
 
-    if uploaded_file is not None:
+        msgs, words, media, _ = helper.fetch_stats(selected_user, df)
 
-        bytes_data = uploaded_file.getvalue()
+        col1,col2,col3,col4 = st.columns(4)
 
-        try:
-            data = bytes_data.decode("utf-8")
-        except:
-            data = bytes_data.decode("latin-1")
+        col1.markdown(f"<div class='kpi-card'><h3>💬 Messages</h3><h2>{msgs}</h2></div>", unsafe_allow_html=True)
+        col2.markdown(f"<div class='kpi-card'><h3>📝 Words</h3><h2>{words}</h2></div>", unsafe_allow_html=True)
+        col3.markdown(f"<div class='kpi-card'><h3>📷 Media Mentions</h3><h2>{media}</h2></div>", unsafe_allow_html=True)
+        col4.markdown(f"<div class='kpi-card'><h3>📦 Media Files</h3><h2>{total_media_files}</h2></div>", unsafe_allow_html=True)
 
-        df = preprocess.preprocess(data)
+        st.markdown("## 📊 Analytics")
+        st.markdown("---")
 
-        st.success("File Uploaded Successfully 🎉")
+        tab1,tab2,tab3,tab4 = st.tabs(
+            ["Timeline","Emoji","Sentiment","🛡 Toxicity"]
+        )
 
-        user_list = df['user'].unique().tolist()
-        if 'group_notification' in user_list:
-            user_list.remove('group_notification')
+        with tab1:
+            timeline = df.groupby(df['date'].dt.date).size().reset_index(name="messages")
+            fig = px.line(timeline,x="date",y="messages",
+                          color_discrete_sequence=[primary_color])
+            st.plotly_chart(fig,use_container_width=True)
 
-        user_list.sort()
-        user_list.insert(0, "Overall")
+        with tab2:
+            emoji_df = helper.emoji_analysis(selected_user, df)
+            if not emoji_df.empty:
+                fig = px.bar(emoji_df,x="emoji",y="count",
+                             color="count",
+                             color_continuous_scale="blues")
+                st.plotly_chart(fig,use_container_width=True)
 
-        selected_user = st.selectbox("Show analysis for", user_list)
+        with tab3:
+            sentiment_counts, sentiment_df = helper.fast_sentiment_analysis(selected_user, df)
+            st.bar_chart(sentiment_counts)
 
-        if st.button("Show Analysis"):
+        with tab4:
+            if st.button("Run Toxicity Scan"):
+                toxic_df, toxic_count, clean_percentage = helper.fast_toxicity_analysis(selected_user, df)
+                st.metric("Toxic Messages", toxic_count)
+                st.metric("Clean Chat %", f"{clean_percentage}%")
 
-            num_messages, num_words, num_media, _ = helper.fetch_stats(selected_user, df)
-
-            col1, col2, col3 = st.columns(3)
-
-            col1.markdown(f"<div class='kpi-card'>💬 Messages<br><h2>{num_messages}</h2></div>", unsafe_allow_html=True)
-            col2.markdown(f"<div class='kpi-card'>📝 Words<br><h2>{num_words}</h2></div>", unsafe_allow_html=True)
-            col3.markdown(f"<div class='kpi-card'>📷 Media<br><h2>{num_media}</h2></div>", unsafe_allow_html=True)
-
-            st.markdown("---")
-
-            tab1, tab2 = st.tabs(["📊 Timeline", "😊 Emoji"])
-
-            with tab1:
-                timeline = df.groupby(df['date'].dt.date).size().reset_index(name='messages')
-                fig = px.line(timeline, x="date", y="messages",
-                              color_discrete_sequence=["#25D366"])
-                st.plotly_chart(fig, use_container_width=True)
-
-            with tab2:
-                emoji_df = helper.emoji_analysis(selected_user, df)
-
-                if not emoji_df.empty:
-                    fig = px.bar(
-                        emoji_df,
-                        x="emoji",
-                        y="count",
-                        color="count",
-                        color_continuous_scale="greens"
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.write("No emojis found")
-
-            st.markdown("---")
-            st.markdown("<center>Made with 💚 by Nivi</center>", unsafe_allow_html=True)
+        st.download_button("Download CSV", df.to_csv(index=False), "chatrica_analysis.csv")
