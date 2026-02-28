@@ -1,54 +1,80 @@
-﻿# Whatsapp ML Project
-## Features
+# 🤖 Chatrica – AI Powered Conversation Intelligence
 
-- Message timeline analysis (daily / monthly trends)
+Chatrica is an advanced AI-driven analytics dashboard that transforms raw WhatsApp conversations into actionable conversational intelligence using Transformer-based NLP models.
 
-- Most active users detection
+---
 
-- Word frequency analysis
+## 🚀 Key Features
 
-- Emoji usage analysis
+- 🤖 Transformer-Based Sentiment Analysis (DistilBERT)
+- 🛡 Toxicity / Abuse Detection (Toxic-BERT)
+- 📊 Engagement Score Calculation
+- 📈 Interactive Timeline & Activity Heatmap
+- 😊 Emoji & Word Frequency Analysis
+- 📦 Media-Aware Chat Parsing (ZIP + Media Detection)
+- 🌙 Light / Dark Theme Toggle
+- ✨ Animated Particle Background UI
+- ⚡ Optimized Batch Inference for Fast Processing
 
-- Most common words visualization
+---
 
-- Interactive graphs and charts
+## 🛠 Tech Stack
 
-- Media & links statistics
-
-## Tech Stack used
-
+### 💻 Core
 - Python
+- Streamlit
 
+### 📊 Data Processing
 - Pandas
+- Regex-based preprocessing
+- URLExtract
 
-- NumPy
+### 🤖 AI / NLP
+- HuggingFace Transformers
+- DistilBERT (Sentiment Analysis)
+- Toxic-BERT (Toxicity Detection)
+- Model Caching (`st.cache_resource`)
+- Batch Processing Optimization
 
+### 📈 Visualization
+- Plotly
+- Seaborn
 - Matplotlib
 
-- Seaborn
+### 🎨 UI / UX
+- Custom CSS
+- Glassmorphism Design
+- Animated Background Effects
+- Responsive Dashboard Layout
 
-- WordCloud
+---
 
-- Streamlit (if you used it for UI)
+## 📦 Media Support
 
-## Installation
+Chatrica supports:
+- `.txt` chat export
+- `.zip` chat export with media
 
-Clone the repository:
+Media files are detected and counted automatically.
 
-git clone 
+---
+
+## 🔐 Privacy & Security
+
+- Runs completely locally
+- No external database
+- No cloud storage
+- No chat data is stored permanently
+- Transformer models run locally after first download
+
+Your data stays on your machine.
+
+---
+
+## 📌 How To Run
+
 ```bash
-https://github.com/Niveditarai/Whatsapp-Chat-Analyzer.git
-```
-
-Install dependencies:
-
-```bash
+git clone https://github.com/YOUR_USERNAME/Chatrica.git
+cd Chatrica
 pip install -r requirements.txt
-```
-
-Run the app:
-
-```bash
 streamlit run app.py
-
-```
